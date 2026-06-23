@@ -168,10 +168,10 @@ function render(){
     if(!a.primary){ linksHtml='<span class="nolink">no listen link in timetable — search manually</span>'; }
     else {
       const btns=a.links.map((l,i)=>{
-        const lbl=(l.platform.charAt(0).toUpperCase()+l.platform.slice(1));
+        const lbl=l.label||(l.platform.charAt(0).toUpperCase()+l.platform.slice(1));
         const canEmbed=!!embed(l);
         if(canEmbed) return '<button class="lk" data-aid="'+a.id+'" data-idx="'+i+'">'+(i===0?'▶ Listen':'▶')+' <span class="plat '+l.platform+'">'+lbl+'</span></button>';
-        return '<a class="lk" href="'+l.url+'" target="_blank" rel="noopener">↗ '+lbl+'</a>';
+        return '<a class="lk" href="'+l.url+'" target="_blank" rel="noopener">'+(l.label?'🔎 ':'↗ ')+lbl+'</a>';
       }).join('');
       linksHtml='<div class="links">'+btns+'</div>';
     }
