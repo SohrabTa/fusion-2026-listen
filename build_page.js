@@ -85,6 +85,7 @@ const html = `<!doctype html>
     <span class="count" id="count"></span>
   </div>
   <div class="hint">Click <b>Listen</b> to load a player inline. Players stream from YouTube/SoundCloud (needs internet). Stars are saved in this browser. Export your picks at the bottom.</div>
+  <div id="fileWarn" style="display:none;margin-top:8px;padding:8px 12px;border:1px solid #b4541f;background:#3a1e10;border-radius:8px;color:#ffd2b3;font-size:13px">⚠ You opened this as a local file, so YouTube previews fail with "Error 153" (YouTube blocks the <code>file://</code> origin). SoundCloud still works. For YouTube, open the hosted page: <a style="color:#ffb380" href="https://sohrabta.github.io/fusion-2026-listen/">sohrabta.github.io/fusion-2026-listen</a></div>
 </header>
 <main id="list"></main>
 <footer>
@@ -139,7 +140,8 @@ function matches(a){
 function embed(link){
   const u=link.url;
   if(link.platform==='youtube'&&link.kind==='video')
-    return '<iframe height="200" src="https://www.youtube.com/embed/'+link.id+'" allow="encrypted-media" allowfullscreen loading="lazy"></iframe>';
+    return '<iframe height="200" src="https://www.youtube-nocookie.com/embed/'+link.id+'?rel=0&modestbranding=1" allow="encrypted-media" allowfullscreen loading="lazy"></iframe>'+
+           '<div style="margin-top:4px"><a class="lk" href="https://www.youtube.com/watch?v='+link.id+'" target="_blank" rel="noopener">↗ Not playing? Watch on YouTube</a></div>';
   if(link.platform==='soundcloud')
     return '<iframe height="'+(link.kind==='profile'?166:120)+'" src="https://w.soundcloud.com/player/?url='+encodeURIComponent(u)+'&color=%23ff5500&auto_play=true&show_comments=false&visual=false" loading="lazy"></iframe>';
   if(link.platform==='mixcloud')
@@ -222,10 +224,13 @@ $('#export').onclick=()=>{
 };
 $('#clearFav').onclick=()=>{if(confirm('Clear all '+favs.size+' starred acts?')){favs.clear();saveFav();render()}};
 
+if(location.protocol==='file:')document.getElementById('fileWarn').style.display='block';
 render();
 </script>
 </body>
 </html>`;
 
+// index.html is the canonical file (served by GitHub Pages); also mirror to the friendly name.
+fs.writeFileSync(path.join(here, 'index.html'), html);
 fs.writeFileSync(path.join(here, 'fusion-2026-listen.html'), html);
-console.log('wrote fusion-2026-listen.html  (' + (html.length/1024).toFixed(0) + ' KB, ' + data.length + ' acts)');
+console.log('wrote index.html + fusion-2026-listen.html  (' + (html.length/1024).toFixed(0) + ' KB, ' + data.length + ' acts)');
