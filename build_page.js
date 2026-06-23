@@ -142,7 +142,7 @@ function embed(link){
   if(link.platform==='youtube'&&link.kind==='video')
     return '<iframe height="200" src="https://www.youtube-nocookie.com/embed/'+link.id+'?rel=0&modestbranding=1" allow="encrypted-media" allowfullscreen loading="lazy"></iframe>'+
            '<div style="margin-top:4px"><a class="lk" href="https://www.youtube.com/watch?v='+link.id+'" target="_blank" rel="noopener">↗ Not playing? Watch on YouTube</a></div>';
-  if(link.platform==='soundcloud')
+  if(link.platform==='soundcloud'&&/(^|\\/\\/)(www\\.)?soundcloud\\.com\\//.test(u))
     return '<iframe height="'+(link.kind==='profile'?166:120)+'" src="https://w.soundcloud.com/player/?url='+encodeURIComponent(u)+'&color=%23ff5500&auto_play=true&show_comments=false&visual=false" loading="lazy"></iframe>';
   if(link.platform==='mixcloud')
     return '<iframe height="120" src="https://www.mixcloud.com/widget/iframe/?feed='+encodeURIComponent(u)+'&autoplay=1" loading="lazy"></iframe>';
