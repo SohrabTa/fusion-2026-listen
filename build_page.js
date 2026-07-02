@@ -8,7 +8,16 @@ const path = require('path');
 const here = __dirname;
 const data = JSON.parse(fs.readFileSync(path.join(here, 'fusion_music.json'), 'utf8'));
 
+// Baked-in curated picks (ids present on the page) — used by the shareable "My picks" filter.
+let pickIds = [];
+try {
+  const picks = JSON.parse(fs.readFileSync(path.join(here, 'picks_music.json'), 'utf8'));
+  const onPage = new Set(data.map(a => a.id));
+  pickIds = picks.map(p => p.id).filter(id => onPage.has(id));
+} catch (e) { /* no picks file -> filter simply matches nothing */ }
+
 const json = JSON.stringify(data).replace(/<\//g, '<\\/');
+const pickJson = JSON.stringify(pickIds);
 
 const html = `<!doctype html>
 <html lang="en">
@@ -81,10 +90,11 @@ const html = `<!doctype html>
       <option value="__none">No link</option>
     </select>
     <button class="chip" id="favOnly">★ Favourites</button>
+    <button class="chip" id="pickOnly" style="border-color:var(--accent)">★ My picks (${pickIds.length})</button>
     <button class="act" id="playAllYt" title="Open the currently visible acts that have a YouTube video as one auto-playing YouTube playlist (no login)">▶ Play visible on YouTube</button>
     <span class="count" id="count"></span>
   </div>
-  <div class="hint">Click <b>Listen</b> to load a player inline. Players stream from YouTube/SoundCloud (needs internet). Stars are saved in this browser. Export your picks at the bottom.</div>
+  <div class="hint">Click <b>Listen</b> to load a player inline. Players stream from YouTube/SoundCloud (needs internet). <b>★ My picks</b> shows a shared, curated shortlist (same for everyone); <b>★ Favourites</b> are your own, saved in this browser.</div>
   <div id="fileWarn" style="display:none;margin-top:8px;padding:8px 12px;border:1px solid #b4541f;background:#3a1e10;border-radius:8px;color:#ffd2b3;font-size:13px">⚠ You opened this as a local file, so YouTube previews fail with "Error 153" (YouTube blocks the <code>file://</code> origin). SoundCloud still works. For YouTube, open the hosted page: <a style="color:#ffb380" href="https://sohrabta.github.io/fusion-2026-listen/">sohrabta.github.io/fusion-2026-listen</a></div>
 </header>
 <main id="list"></main>
@@ -108,7 +118,8 @@ const FLOORS=[...new Set(DATA.flatMap(a=>a.shows.map(s=>s.floor)).filter(Boolean
 const dayLabel=d=>{const wd=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d+'T12:00:00').getDay()];return wd+' '+d.slice(8,10)+'.'+d.slice(5,7)+'.'};
 const fmtTime=iso=>{if(!iso)return'';const t=iso.slice(11,16);return t};
 
-const state={q:'',days:new Set(),genres:new Set(),floor:'',platform:'',favOnly:false};
+const MYPICKS=new Set(${pickJson});
+const state={q:'',days:new Set(),genres:new Set(),floor:'',platform:'',favOnly:false,pickOnly:false};
 
 // build day chips
 const daysEl=$('#days');
@@ -122,9 +133,11 @@ floorSel.onchange=()=>{state.floor=floorSel.value;render()};
 $('#platform').onchange=e=>{state.platform=e.target.value;render()};
 $('#q').oninput=e=>{state.q=e.target.value.toLowerCase().trim();render()};
 $('#favOnly').onclick=()=>{state.favOnly=!state.favOnly;$('#favOnly').classList.toggle('on');render()};
+$('#pickOnly').onclick=()=>{state.pickOnly=!state.pickOnly;$('#pickOnly').classList.toggle('on');render()};
 
 function matches(a){
   if(state.favOnly && !favs.has(a.id)) return false;
+  if(state.pickOnly && !MYPICKS.has(a.id)) return false;
   if(state.genres.size && !state.genres.has(a.genre)) return false;
   if(state.days.size && !a.shows.some(s=>state.days.has((s.start||'').slice(0,10)))) return false;
   if(state.floor && !a.shows.some(s=>s.floor===state.floor)) return false;
@@ -225,6 +238,10 @@ $('#export').onclick=()=>{
 $('#clearFav').onclick=()=>{if(confirm('Clear all '+favs.size+' starred acts?')){favs.clear();saveFav();render()}};
 
 if(location.protocol==='file:')document.getElementById('fileWarn').style.display='block';
+// Shared link: open pre-filtered to the curated picks via ?picks or #picks
+if(/[?&#](picks|mypicks)\b/i.test(location.href) && MYPICKS.size){
+  state.pickOnly=true; $('#pickOnly').classList.add('on');
+}
 render();
 </script>
 </body>
